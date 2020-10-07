@@ -17,7 +17,7 @@ import torch.nn.functional as F
 
 from DeepGLO.data_loader import *
 
-use_cuda = True  #### Assuming you have a GPU ######
+use_cuda = False  #### Assuming you have a GPU ######
 
 from DeepGLO.utilities import *
 from DeepGLO.time import *
@@ -26,7 +26,6 @@ import random
 import pickle
 
 np.random.seed(111)
-torch.cuda.manual_seed(111)
 torch.manual_seed(111)
 random.seed(111)
 
@@ -365,7 +364,7 @@ class LocalModel(object):
         )
         self.val_len = val_len
         if use_cuda:
-            self.seq = self.seq.cuda()
+            self.seq = self.seq
 
     def __loss__(self, out, target, dic=None):
         criterion = nn.L1Loss()
@@ -383,7 +382,7 @@ class LocalModel(object):
         """
         print("Training Local Model(Tconv)")
         if use_cuda:
-            self.seq = self.seq.cuda()
+            self.seq = self.seq
         optimizer = optim.Adam(params=self.seq.parameters(), lr=self.lr)
         iter_count = 0
         loss_all = []
@@ -397,8 +396,8 @@ class LocalModel(object):
                 inp_test, out_target_test, _, _ = self.D.supply_test()
             current_epoch = self.D.epoch
             if use_cuda:
-                inp = inp.cuda()
-                out_target = out_target.cuda()
+                inp = inp
+                out_target = out_target
             inp = Variable(inp)
             out_target = Variable(out_target)
             optimizer.zero_grad()
@@ -415,8 +414,8 @@ class LocalModel(object):
             loss_all = loss_all + [loss.cpu().item()]
             if self.test:
                 if use_cuda:
-                    inp_test = inp_test.cuda()
-                    out_target_test = out_target_test.cuda()
+                    inp_test = inp_test
+                    out_target_test = out_target_test
                 inp_test = Variable(inp_test)
                 out_target_test = Variable(out_target_test)
                 out_test, dic = self.__prediction__(inp_test)
@@ -444,35 +443,35 @@ class LocalModel(object):
                     if scount > tenacity and early_stop:
                         self.seq = self.saved_seq
                         if use_cuda:
-                            self.seq = self.seq.cuda()
+                            self.seq = self.seq
 
                         break
 
-    def convert_to_input(self, data, cuda=True):
+    def convert_to_input(self, data, cuda=False):
         n, m = data.shape
         inp = torch.from_numpy(data).view(1, n, m)
         inp = inp.transpose(0, 1).float()
 
         if cuda:
-            inp = inp.cuda()
+            inp = inp
 
         return inp
 
-    def convert_covariates(self, data, covs, cuda=True):
+    def convert_covariates(self, data, covs, cuda=False):
         nd, td = data.shape
         rcovs = np.repeat(
             covs.reshape(1, covs.shape[0], covs.shape[1]), repeats=nd, axis=0
         )
         rcovs = torch.from_numpy(rcovs).float()
         if cuda:
-            rcovs = rcovs.cuda()
+            rcovs = rcovs
         return rcovs
 
-    def convert_ycovs(self, data, ycovs, cuda=True):
+    def convert_ycovs(self, data, ycovs, cuda=False):
         nd, td = data.shape
         ycovs = torch.from_numpy(ycovs).float()
         if cuda:
-            ycovs = ycovs.cuda()
+            ycovs = ycovs
         return ycovs
 
     def convert_from_output(self, T):
@@ -485,7 +484,7 @@ class LocalModel(object):
         if cpu:
             self.seq = self.seq.cpu()
         else:
-            self.seq = self.seq.cuda()
+            self.seq = self.seq
         inp = self.convert_to_input(data)
         if covariates is not None:
             cov = self.convert_covariates(data, covariates)
@@ -524,9 +523,9 @@ class LocalModel(object):
                 )
             out = torch.cat((inp, output), dim=2)
         out = out[:, 0, :].view(out.size(0), 1, out.size(2))
-        out = out.cuda()
+        out = out
         y = self.convert_from_output(out)
-        self.seq = self.seq.cuda()
+        self.seq = self.seq
         return y
 
     def predict_future(
@@ -569,7 +568,7 @@ class LocalModel(object):
 
         for i in range(1, len(I) - 1):
             bdata = data[range(I[i], I[i + 1]), :]
-            self.seq = self.seq.cuda()
+            self.seq = self.seq
             if ycovs is not None:
                 temp = self.predict_future_batch(
                     bdata, covariates, ycovs[range(I[i], I[i + 1]), :, :], future, cpu

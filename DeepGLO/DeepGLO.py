@@ -22,7 +22,7 @@ from DeepGLO.data_loader import *
 
 from sklearn.decomposition import NMF
 
-use_cuda = True  #### Assuming you have a GPU ######
+use_cuda = False  #### Assuming you have a GPU ######
 
 from DeepGLO.utilities import *
 
@@ -38,7 +38,7 @@ import random
 import pickle
 
 np.random.seed(111)
-torch.cuda.manual_seed(111)
+
 torch.manual_seed(111)
 random.seed(111)
 
@@ -66,7 +66,7 @@ class DeepGLO(object):
         rank=64,
         kernel_size_Y=7,
         lr=0.0005,
-        val_len=24,
+        val_len=12,
         end_index=20000,
         normalize=False,
         start_date="2016-1-1",
@@ -167,7 +167,7 @@ class DeepGLO(object):
         last_step,
         future,
         cpu=True,
-        num_epochs=50,
+        num_epochs=30,
         alpha=0.5,
         vanilla=True,
         tol=1e-7,
@@ -186,15 +186,15 @@ class DeepGLO(object):
         if cpu:
             self.Xseq = self.Xseq.cpu()
         else:
-            Yn = Yn.cuda()
-            Xf = Xf.cuda()
+            Yn = Yn
+            Xf = Xf
 
         Fn = self.F
 
         Xt = torch.zeros(self.rank, future).float()
         Xn = torch.normal(Xt, 0.1)
         if not cpu:
-            Xn = Xn.cuda()
+            Xn = Xn
         lprev = 0
         for i in range(num_epochs):
             Xn = Variable(Xn, requires_grad=True)
@@ -214,7 +214,7 @@ class DeepGLO(object):
                 print("Recovery Loss: " + str(loss.cpu().item()))
                 lprev = loss.cpu().item()
 
-        self.Xseq = self.Xseq.cuda()
+        self.Xseq = self.Xseq
 
         return Xn.detach()
 
@@ -222,8 +222,8 @@ class DeepGLO(object):
         Xout = self.X[:, last_hindex + 1 : last_hindex + 1 + out.size(2)]
         Fout = self.F[self.D.I[last_vindex : last_vindex + out.size(0)], :]
         if use_cuda:
-            Xout = Xout.cuda()
-            Fout = Fout.cuda()
+            Xout = Xout
+            Fout = Fout
         Xout = Variable(Xout, requires_grad=True)
         out = self.temporal_to_tensor2d(out)
         optim_X = optim.Adam(params=[Xout], lr=self.lr)
@@ -243,8 +243,8 @@ class DeepGLO(object):
         Xout = self.X[:, last_hindex + 1 : last_hindex + 1 + out.size(2)]
         Fout = self.F[self.D.I[last_vindex : last_vindex + out.size(0)], :]
         if use_cuda:
-            Xout = Xout.cuda()
-            Fout = Fout.cuda()
+            Xout = Xout
+            Fout = Fout
         Fout = Variable(Fout, requires_grad=True)
         optim_F = optim.Adam(params=[Fout], lr=self.lr)
         out = self.temporal_to_tensor2d(out)
@@ -267,8 +267,8 @@ class DeepGLO(object):
         for p in self.Xseq.parameters():
             p.requires_grad = False
         if use_cuda:
-            Xin = Xin.cuda()
-            Xout = Xout.cuda()
+            Xin = Xin
+            Xout = Xout
         Xin = Variable(Xin, requires_grad=True)
         Xout = Variable(Xout, requires_grad=True)
         optim_out = optim.Adam(params=[Xout], lr=self.lr)
@@ -284,48 +284,48 @@ class DeepGLO(object):
         self.X[:, last_hindex + 1 : last_hindex + 1 + inp.size(2)] = temp
         return loss
 
-    def predict_future_batch(self, model, inp, future=10, cpu=True):
+    def predict_future_batch(self, model, inp, future=9, cpu=True):
         if cpu:
             model = model.cpu()
             inp = inp.cpu()
         else:
-            inp = inp.cuda()
+            inp = inp
 
         out = model(inp)
         output = out[:, :, out.size(2) - 1].view(out.size(0), out.size(1), 1)
         out = torch.cat((inp, output), dim=2)
-        torch.cuda.empty_cache()
+        
         for i in range(future - 1):
             inp = out
             out = model(inp)
             output = out[:, :, out.size(2) - 1].view(out.size(0), out.size(1), 1)
             out = torch.cat((inp, output), dim=2)
-            torch.cuda.empty_cache()
+            
 
         out = self.temporal_to_tensor2d(out)
         out = np.array(out.cpu().detach())
         return out
 
-    def predict_future(self, model, inp, future=10, cpu=True, bsize=90):
+    def predict_future(self, model, inp, future=9, cpu=True, bsize=90):
         n = inp.size(0)
         inp = inp.cpu()
         ids = np.arange(0, n, bsize)
         ids = list(ids) + [n]
         out = self.predict_future_batch(model, inp[ids[0] : ids[1], :, :], future, cpu)
-        torch.cuda.empty_cache()
+        
 
         for i in range(1, len(ids) - 1):
             temp = self.predict_future_batch(
                 model, inp[ids[i] : ids[i + 1], :, :], future, cpu
             )
-            torch.cuda.empty_cache()
+            
             out = np.vstack([out, temp])
 
         out = torch.from_numpy(out).float()
         return self.tensor2d_to_temporal(out)
 
     def predict_global(
-        self, ind, last_step=100, future=10, cpu=False, normalize=False, bsize=90
+        self, ind, last_step=100, future=9, cpu=False, normalize=False, bsize=90
     ):
 
         if ind is None:
@@ -355,11 +355,11 @@ class DeepGLO(object):
 
         Y = np.array(Y[ind, :].cpu().detach())
 
-        self.Xseq = self.Xseq.cuda()
+        self.Xseq = self.Xseq
 
         del F
 
-        torch.cuda.empty_cache()
+        
 
         for p in self.Xseq.parameters():
             p.requires_grad = True
@@ -412,7 +412,7 @@ class DeepGLO(object):
         self.D.vindex = 0
         self.D.hindex = 0
         if use_cuda:
-            self.Xseq = self.Xseq.cuda()
+            self.Xseq = self.Xseq
         for p in self.Xseq.parameters():
             p.requires_grad = True
 
@@ -430,8 +430,8 @@ class DeepGLO(object):
             last_hindex = self.D.hindex
             inp, out, vindex, hindex = self.D.next_batch(option=1)
             if use_cuda:
-                inp = inp.float().cuda()
-                out = out.float().cuda()
+                inp = inp.float()
+                out = out.float()
             if iter_count % mod >= 0:
                 l1 = self.step_factF_loss(inp, out, last_vindex, last_hindex, reg=reg_F)
                 l_F = l_F + [l1.cpu().item()]
@@ -455,7 +455,7 @@ class DeepGLO(object):
                 inp = self.predict_global(
                     ind,
                     last_step=self.end_index - self.val_len,
-                    future=self.val_len,
+                    future=9,
                     cpu=False,
                 )
                 R = self.Ymat[ind, self.end_index - self.val_len : self.end_index]
@@ -483,7 +483,7 @@ class DeepGLO(object):
                         self.F = Fbest
                         self.Xseq = Xseqbest
                         if use_cuda:
-                            self.Xseq = self.Xseq.cuda()
+                            self.Xseq = self.Xseq
                         break
 
     def create_Ycov(self):
@@ -494,7 +494,7 @@ class DeepGLO(object):
         Ycov = copy.deepcopy(self.Ymat[:, 0:t0])
         Ymat_now = self.Ymat[:, 0:t0]
         if use_cuda:
-            self.Xseq = self.Xseq.cuda()
+            self.Xseq = self.Xseq
 
         self.Xseq = self.Xseq.eval()
 
@@ -505,9 +505,9 @@ class DeepGLO(object):
             inp, out, vindex, hindex = self.D.next_batch(option=1)
 
             if use_cuda:
-                inp = inp.cuda()
+                inp = inp
 
-            Xin = self.tensor2d_to_temporal(self.X[:, last_hindex : last_hindex + inp.size(2)]).cuda()
+            Xin = self.tensor2d_to_temporal(self.X[:, last_hindex : last_hindex + inp.size(2)])
             Xout = self.temporal_to_tensor2d(self.Xseq(Xin)).cpu()
             Fout = self.F[self.D.I[last_vindex : last_vindex + out.size(0)], :]
             output = np.array(torch.matmul(Fout, Xout).detach())
@@ -561,7 +561,7 @@ class DeepGLO(object):
         self.Yseq.train_model(early_stop=early_stop, tenacity=tenacity)
 
     def train_all_models(
-        self, init_epochs=100, alt_iters=10, y_iters=200, tenacity=7, mod=5
+        self, init_epochs=30, alt_iters=10, y_iters=50, tenacity=7, mod=5
     ):
         print("Initializing Factors.....")
         self.num_epochs = init_epochs
@@ -579,7 +579,7 @@ class DeepGLO(object):
                     + str(i)
                     + "-------------------------------------------------------"
                 )
-                self.num_epochs = 300
+                self.num_epochs = 30
                 self.train_factors(
                     seed=False, early_stop=True, tenacity=tenacity, mod=mod
                 )
@@ -589,7 +589,7 @@ class DeepGLO(object):
                     + str(i)
                     + "-------------------------------------------------------"
                 )
-                self.num_epochs = 300
+                self.num_epochs = 30
                 T = np.array(self.X.cpu().detach())
                 self.train_Xseq(
                     Ymat=T,
@@ -602,7 +602,7 @@ class DeepGLO(object):
         self.train_Yseq(num_epochs=y_iters, early_stop=True, tenacity=tenacity)
 
     def predict(
-        self, ind=None, last_step=100, future=10, cpu=False, normalize=False, bsize=90
+        self, ind=None, last_step=100, future=9, cpu=False, normalize=False, bsize=90
     ):
 
         if ind is None:

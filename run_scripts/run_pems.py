@@ -46,7 +46,7 @@ def bool2str(b):
         return "false"
 
 
-Ymat = np.load("./datasets/pems.npy")
+Ymat = np.load("../datasets/pems.npy")
 print(Ymat.shape)
 vbsize = 128  ## vertical batch size
 hbsize = 256  ## horizontal batch size
@@ -57,7 +57,7 @@ dropout = 0.1  ## dropout during training
 rank = 64  ## rank of global model
 kernel_size_Y = 7  ## kernel size of hybrid model
 lr = 0.0005  ## learning rate
-val_len = 24  ## validation length
+val_len = 12  ## validation length
 end_index = Ymat.shape[1] - 160 * 9  ## models will not look beyond this during training
 start_date = "2012-5-1"  ## start date time for the time-series
 freq = "5T"  ## frequency of data
@@ -67,7 +67,7 @@ dti = None  ## no spcified time covariates (using default)
 svd = True  ## factor matrices are initialized by NMF
 period = None  ## periodicity of 24 is expected, leave it out if not known
 y_iters = 300  ## max. number of iterations while training Tconv models
-init_epochs = 100  ## max number of iterations while initialiozing factors
+init_epochs = 30  ## max number of iterations while initialiozing factors
 forward_cov = False
 
 
@@ -113,7 +113,7 @@ def main(args):
     print(result_dic)
 
     out_path = Path(
-        ".",
+        "../",
         "results",
         "result_dictionary_pems_" + bool2str(normalize) + ".pkl",
     )
