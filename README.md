@@ -4,6 +4,12 @@
 
 [Task 1](https://github.com/harshgrovr/Global-and-Local-Time-Series/tree/main/DeepGLO/Task1)
 
+### Python Scripts
+`cd DeepGLO/Task1`
+
+`python local.py`
+
+
 # Forked from: https://github.com/rajatsen91/deepglo
 
 ## Task 2 and Task 3
