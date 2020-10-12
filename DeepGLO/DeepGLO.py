@@ -26,7 +26,6 @@ use_cuda = False  #### Assuming you have a GPU ######
 
 from DeepGLO.utilities import *
 
-
 from DeepGLO.LocalModel import *
 
 from DeepGLO.metrics import *
@@ -42,12 +41,13 @@ np.random.seed(111)
 torch.manual_seed(111)
 random.seed(111)
 
-
+# Doubt
 def get_model(A, y, lamb=0):
     """
     Regularized least-squares
     """
     n_col = A.shape[1]
+    # Parameters of least square solution
     return np.linalg.lstsq(
         A.T.dot(A) + lamb * np.identity(n_col), A.T.dot(y), rcond=None
     )
@@ -250,9 +250,11 @@ class DeepGLO(object):
         out = self.temporal_to_tensor2d(out)
         Hout = torch.matmul(Fout, Xout)
         optim_F.zero_grad()
+
         loss = torch.mean(torch.pow(Hout - out.detach(), 2))
         l2 = torch.mean(torch.pow(Fout, 2))
         r = loss.detach() / l2.detach()
+
         loss = loss + r * reg * l2
         loss.backward()
         optim_F.step()
@@ -485,6 +487,7 @@ class DeepGLO(object):
                         if use_cuda:
                             self.Xseq = self.Xseq
                         break
+
 
     def create_Ycov(self):
         t0 = self.end_index + 1

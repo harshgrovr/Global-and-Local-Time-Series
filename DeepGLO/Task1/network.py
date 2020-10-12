@@ -2,9 +2,20 @@
 from torch.nn.utils import weight_norm
 
 import torch.nn as nn
-#########################################################################
-# Used Network code from: https://github.com/locuslab/TCN/tree/master/TCN
-#########################################################################
+
+
+use_cuda = False  #### Assuming you have a GPU ######
+
+from DeepGLO.utilities import *
+from DeepGLO.time import *
+from DeepGLO.metrics import *
+import random
+import pickle
+import torch
+
+np.random.seed(111)
+torch.manual_seed(111)
+random.seed(111)
 
 
 class Chomp1d(nn.Module):

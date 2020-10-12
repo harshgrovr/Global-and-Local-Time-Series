@@ -14,14 +14,11 @@ import torch.utils.tensorboard
 #!/usr/bin/env python
 config = {
 "learning_rate" : 1e-3,
-"num_epochs" : 20,
+"num_epochs" : 60,
 "decay" : 1e-5,
 "input_dim" : 24,
-"hidden_dim" : 32,
-"layer_dim" : 1,
-"output_dim" : 15,
 "seq_dim" : 512,
-"batch_size" :1,
+"batch_size" :128,
 "num_workers":4
 }
 
@@ -48,7 +45,7 @@ def train(npy_file_path):
             num_inputs=1,
             num_channels=[32, 32, 32, 32, 32, 1],
             kernel_size=7,
-            dropout=0.2,
+            dropout=0.3,
             init=True,
         )
 
@@ -97,7 +94,7 @@ def training(num_epochs, trainLoader, optimizer, model, criterion, seq_dim, inpu
         print('epoch is', epoch)
         running_loss = 0
         for i, (input, output) in enumerate(trainLoader):
-            if i % 5000 == 0:
+            if i % 10 == 0:
                 print(i)
             if torch.cuda.is_available():
                 input = input.float().cuda()
@@ -106,9 +103,9 @@ def training(num_epochs, trainLoader, optimizer, model, criterion, seq_dim, inpu
                 input = input.float()
                 output = output.float()
 
-            # Network is taking single batch so the input size is (1,1,512)
-            input = torch.squeeze(input,dim=0)
-            output = torch.squeeze(output, dim=0)
+            # Network is taking  input size as (None,1,512)
+            # input = torch.squeeze(input,dim=0)
+            # output = torch.squeeze(output, dim=0)
 
             optimizer.zero_grad()  # Reset gradients tensors
 

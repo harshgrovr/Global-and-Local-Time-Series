@@ -17,9 +17,9 @@ class datasetCSV(Dataset):
 
     def __getitem__(self, idx):
         self.input = self.csv_input[idx][0]
-        self.input = np.expand_dims(self.input, axis= 1)
+        # self.input = np.expand_dims(self.input, axis= 1)
         self.output = self.csv_input[idx][1]
-        self.output = np.expand_dims(self.output, axis=1)
+        # self.output = np.expand_dims(self.output, axis=1)
         self.input = torch.as_tensor(np.array(self.input).astype('float'))
         self.output = torch.as_tensor(np.array(self.output).astype('float'))
         return self.input, self.output
