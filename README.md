@@ -23,5 +23,13 @@
 
 `python run_scripts/run_pems.py --normalize False`
 
+# Results
+
+ - Task 1: 'RMSE_local': 15.84
+
+ - Task 2: 'RMSE_global': 7.99688920619827
+
+ - Task 3: 'RMSE-global + local': 5.84417049619019
+
 
 
