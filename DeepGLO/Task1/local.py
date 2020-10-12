@@ -17,9 +17,9 @@ config = {
 "num_epochs" : 60,
 "decay" : 1e-5,
 "input_dim" : 24,
-"seq_dim" : 512,
-"batch_size" :128,
-"num_workers":4
+"seq_dim" : 256,
+"batch_size" :32,
+"num_workers":8
 }
 
 # Create Sequence(input_feature_window and output window for currect Univariate Time series)
